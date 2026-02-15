@@ -8,3 +8,7 @@ Coming features:
 -ability to use output to attempt bruteforce on devices via USB port 
 -use of custom wordlists (seclists, etc.)
 -plain old password generator 
+
+HOW TO USE:
+lowkey pretty straightforward. I'm including the compiled binary, but you can also use g++ to directly compile the source code yourself. I'll keep providing updates and eventually make this a much better and functioning app, but for now I just want to put this out there.
+but if you wanna compile it you'd do something like g++ passcrack.cpp -o passcrack.exe and there you have it. 
