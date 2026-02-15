@@ -35,6 +35,7 @@ void print_banner() {
 }
 
 void print_menu() {
+    //add more options. potentially add option for users to just generate a password for personal use?
     cout << "  ┌───────────────────────────────────────────────────────────────────────────┐\n";
     cout << "  │                          SELECT AN ATTACK METHOD                          │\n";
     cout << "  ├───────────────────────────────────────────────────────────────────────────┤\n";
@@ -64,6 +65,10 @@ void success_msg(const string& msg) {
 void error_msg(const string& msg) {
     cout << " [!] " << msg << endl;
 }
+
+//todo: add function for just normal password generation. allow input 
+//like name, dob, and petnames to generate personalized passwords. 
+
 //function for generating four digit passwords
 int four_digit_password() {
 
@@ -219,6 +224,9 @@ int main() {
             print_separator();
             eight_digit_password();
             break;
+            //todo: add ability to send input to a device such as a phone over USB port. 
+            //would require additional libraries and permissions, but would be a powerful 
+            //feature for testing the strength of your own devices.
         case 4: {
             vector <string> wordlist;
             status_msg("Dictionary attack selected.");
