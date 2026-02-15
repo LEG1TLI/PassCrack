@@ -6,10 +6,65 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <iomanip>
 using namespace std;
-
+//this generates random seed based on current time at moment of execution
 mt19937 generator(chrono::system_clock::now().time_since_epoch().count());
 
+void clear_screen() {
+    system("cls");
+}
+
+void print_banner() {
+    cout << "\n";
+    cout << "  ╔═══════════════════════════════════════════════════════════════════════════╗\n";
+    cout << "  ║                                                                           ║\n";
+    cout << "  ║  ██████╗  ██████╗ ███████╗███████╗ ██████╗██████╗ ██████╗ ██████╗██╗  ██╗\n";
+    cout << "  ║  ██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝\n";
+    cout << "  ║  ██████╔╝███████║███████╗███████╗██║     ██████╔╝███████║██║     █████╔╝ \n";
+    cout << "  ║  ██╔═══╝ ██╔══██║╚════██║╚════██║██║     ██╔══██╗██╔══██║██║     ██╔═██╗ \n";
+    cout << "  ║  ██║     ██║  ██║███████║███████║╚██████╗██║  ██║██║  ██║╚██████╗██║  ██╗\n";
+    cout << "  ║  ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝\n";
+    cout << "  ║                                                                           ║\n";
+    cout << "  ║                    Advanced Password Cracking Utility                    ║\n";
+    cout << "  ║                         Version 1.0 | 2026 Edition                       ║\n";
+    cout << "  ║                        [ For Educational Use Only ]                      ║\n";
+    cout << "  ║                                                                           ║\n";
+    cout << "  ╚═══════════════════════════════════════════════════════════════════════════╝\n";
+    cout << "\n";
+}
+
+void print_menu() {
+    cout << "  ┌───────────────────────────────────────────────────────────────────────────┐\n";
+    cout << "  │                          SELECT AN ATTACK METHOD                          │\n";
+    cout << "  ├───────────────────────────────────────────────────────────────────────────┤\n";
+    cout << "  │                                                                           │\n";
+    cout << "  │    [1] → Bruteforce 4-Digit Numeric Password                              │\n";
+    cout << "  │    [2] → Bruteforce 6-Digit Numeric Password                              │\n";
+    cout << "  │    [3] → Bruteforce 8-Digit Numeric Password                              │\n";
+    cout << "  │    [4] → Dictionary Attack with Custom Wordlist                           │\n";
+    cout << "  │    [5] → Exit PassCrack                                                   │\n";
+    cout << "  │                                                                           │\n";
+    cout << "  └───────────────────────────────────────────────────────────────────────────┘\n";
+    cout << "\n  >> Enter your choice: ";
+}
+
+void print_separator() {
+    cout << "  ═══════════════════════════════════════════════════════════════════════════\n";
+}
+
+void status_msg(const string& msg) {
+    cout << " [*]" << msg << endl;
+}
+
+void success_msg(const string& msg) {
+    cout << " [+] " << msg << endl;
+}
+
+void error_msg(const string& msg) {
+    cout << " [!] " << msg << endl;
+}
+//function for generating four digit passwords
 int four_digit_password() {
 
     cout << "Iterating thorugh possible four digit passwords..." << endl;
@@ -32,6 +87,7 @@ int four_digit_password() {
     return 0;
 }
 
+//function for generating six digit passwords
 int six_digit_password() {
     uniform_int_distribution<int> distribution(100000, 999999);
 
@@ -53,6 +109,7 @@ int six_digit_password() {
     return 0;
 }
 
+//function for generating eight digit passwords
 int eight_digit_password() {
     uniform_int_distribution<int> distribution(10000000, 99999999);
 
@@ -94,6 +151,7 @@ vector<string> generate_possible_passwords(string word) {
     passwords.push_back(capitalized);
 
     string leet = lower;
+    //leetspeak substitutions
     for (char& c : leet) {
         if (c == 'a') c = '4';
         else if (c == 'e') c = '3';
@@ -108,6 +166,7 @@ vector<string> generate_possible_passwords(string word) {
     passwords.push_back(lower + "!");
     passwords.push_back(capitalized + "123");
     return passwords;
+    //todo: create feature to concatenate all words in the wordlist together
 }
 
 void alphabetical_password_guesser(vector<string> wordlist) {
@@ -133,41 +192,57 @@ void alphabetical_password_guesser(vector<string> wordlist) {
 }
 
 int main() {
-    cout << "Welcome to PassCrack!" << endl;
-    cout << "Please select an option:" << endl;
-    cout << "1. Bruteforce four digit password" << endl;
-    cout << "2. Bruteforce six digit password" << endl;
-    cout << "3. Bruteforce eight digit password" << endl;
-    cout << "4. Alphabetical password guessing with wordlist" << endl;
-    cout << "5. Exit" << endl;
+    clear_screen();
+    print_banner();
+    print_menu();
+
     int choice;
     cin >> choice;
+
+    clear_screen();
+    print_banner();
+    print_separator();
     switch (choice) {
+        //Choice structure for selecting bruteforce methods
         case 1:
+            status_msg("Initializing 4-digit bruteforce...");
+            print_separator();
             four_digit_password();
             break;
         case 2:
+            status_msg("Initializing 6-digit bruteforce...");
+            print_separator();
             six_digit_password();
             break;
         case 3:
+            status_msg("Initializing 8-digit bruteforce...");
+            print_separator();
             eight_digit_password();
             break;
         case 4: {
             vector <string> wordlist;
+            status_msg("Dictionary attack selected.");
+            print_separator();
             cout << "Enter words for the wordlist (type 'done' to finish):" << endl;
             string word;
             while (cin >> word && word != "done") {
                 wordlist.push_back(word);
+                success_msg("added: " + word);
             }
+            print_separator();
             alphabetical_password_guesser(wordlist);
             break;
         }
         
         case 5:
-            cout << "Exiting Passcrack." << endl;
+            status_msg("Exiting PassCrack");
+            print_separator();
             break;
         default:
             cout << "You must pick something." << endl;
     }
+
+    cout << "\n Press any key to exit..." << endl;
+    _getch();
     return 0;
 }
