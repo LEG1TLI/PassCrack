@@ -7,9 +7,11 @@
 #include <algorithm>
 #include <random>
 #include <iomanip>
+#include <fstream>
 using namespace std;
+using namespace chrono;
 //this generates random seed based on current time at moment of execution
-mt19937 generator(chrono::system_clock::now().time_since_epoch().count());
+mt19937 generator(system_clock::now().time_since_epoch().count());
 
 void clear_screen() {
     system("cls");
@@ -26,9 +28,9 @@ void print_banner() {
     cout << "  ║  ██║     ██║  ██║███████║███████║╚██████╗██║  ██║██║  ██║╚██████╗██║  ██╗\n";
     cout << "  ║  ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝\n";
     cout << "  ║                                                                           ║\n";
-    cout << "  ║                    Advanced Password Cracking Utility                    ║\n";
-    cout << "  ║                         Version 1.0 | 2026 Edition                       ║\n";
-    cout << "  ║                        [ For Educational Use Only ]                      ║\n";
+    cout << "  ║                    Advanced Password Cracking Utility                     ║\n";
+    cout << "  ║                         Version 1.0.1 | 2026 Edition                      ║\n";
+    cout << "  ║                        [ For Educational Use Only ]                       ║\n";
     cout << "  ║                                                                           ║\n";
     cout << "  ╚═══════════════════════════════════════════════════════════════════════════╝\n";
     cout << "\n";
@@ -44,8 +46,8 @@ void print_menu() {
     cout << "  │    [2] → Bruteforce 6-Digit Numeric Password                              │\n";
     cout << "  │    [3] → Bruteforce 8-Digit Numeric Password                              │\n";
     cout << "  │    [4] → Dictionary Attack with Custom Wordlist                           │\n";
-    cout << "  │    [5] → Exit PassCrack                                                   │\n";
-    cout << "  │                                                                           │\n";
+    cout << "  │    [5] → Generate personalized password                                   │\n";
+    cout << "  │    [6] → Exit PassCrack                                                   │\n";
     cout << "  └───────────────────────────────────────────────────────────────────────────┘\n";
     cout << "\n  >> Enter your choice: ";
 }
@@ -174,26 +176,72 @@ vector<string> generate_possible_passwords(string word) {
     //todo: create feature to concatenate all words in the wordlist together
 }
 
-void alphabetical_password_guesser(vector<string> wordlist) {
-    cout << "Attempting alphabetical password guessing..." << endl;
-    cout << "--------------------------------------------------------------" << endl;
+bool alphabetical_password_guesser(vector <string>& wordlist) {
+    string target_password;
+    cout << "Enter possible password to test against: ";
+    cin >> target_password;
 
-    for (const string& word : wordlist) {
-        vector<string> passwords = generate_possible_passwords(word);
-        for (const string& variant : passwords) {
-            cout << "Trying: " << variant << endl;
+    print_separator();
+    cout << "Starting dictonary attack..." << endl;
 
-            if(_kbhit()) {
-                _getch();
-                cout << "--------------------------------------------------------------" << endl;
-                cout << "Password guessing stopped by user." << endl;
-                return;
-            }
+    int attempts = 0;
+    auto start_time = steady_clock::now();
+
+    for(const string& word : wordlist) {
+        attempts++;
+        cout << " [" << attempts << "] Trying: " << word << endl;
+
+        if (word == target_password) {
+            auto end_time = steady_clock::now();
+            auto duration = duration_cast<seconds>(end_time - start_time).count();
+            success_msg("Password found!: " + word);
+
+            print_separator();
+            success_msg("PASSWORD CRACKED!");
+            success_msg("Password: " + word);
+            success_msg("Attempts: " + to_string(attempts));
+            success_msg("Time: " + to_string(duration) + " seconds");
+            print_separator();
+            return true;
         }
     }
 
-    cout << "--------------------------------------------------------------" << endl;
-    cout << "completed all variations." << endl;
+    error_msg("Password not found in wordlist.");
+    return false;
+}
+
+void wordlist_frm_file(vector<string>& wordlist) {
+    string filepath;
+    cout << "Enter path to wordlist: " << endl;
+    cin.ignore();
+    getline(cin, filepath);
+
+    ifstream file(filepath);
+
+    if (!file.is_open()) {
+        error_msg("Failed to open file at: " + filepath);
+        return;
+    }
+
+    string word;
+    int count = 0;
+    while (getline(file, word)) {
+        word.erase(word.find_last_not_of(" \n\r\t") + 1);
+        if (!word.empty()) {
+            wordlist.push_back(word);
+            count++;
+        }
+    }
+
+    file.close();
+    success_msg("Loaded " + to_string(count) +" words from file.");
+    print_separator();
+
+}
+
+void generate_personal_pwd() {
+    cout << "Personalized password generation coming soon!" << endl;
+    cout << "this feature is meant for generating a password, either for your own pentesting purposes or just to use on a day to day basis!" << endl;
 }
 
 int main() {
@@ -228,22 +276,46 @@ int main() {
             //would require additional libraries and permissions, but would be a powerful 
             //feature for testing the strength of your own devices.
         case 4: {
-            vector <string> wordlist;
-            status_msg("Dictionary attack selected.");
-            print_separator();
-            cout << "Enter words for the wordlist (type 'done' to finish):" << endl;
+           vector<string> wordlist;
+           status_msg("Dictionary attack selected. ");
+           print_separator();
+
+           cout << " [1] >> load wordlist from file (enter filepath)" << endl;
+           cout << " [2] >> enter custom words (comma separated)" << endl;
+           cout << " >> choose option: ";
+
+           int option;
+           cin >> option;
+           print_separator();
+
+           if (option == 1) {
+                wordlist_frm_file(wordlist);
+           } else {
+            cout << " Enter custom words (comma separated, type 'done' to finish): \n\n" << endl;
             string word;
-            while (cin >> word && word != "done") {
-                wordlist.push_back(word);
-                success_msg("added: " + word);
+            cin.ignore();
+            while (getline(cin, word) && word != "done") {
+                if (!word.empty()) {
+                    wordlist.push_back(word);
+                    success_msg("Added word: " + word);
+                }
             }
             print_separator();
+           }
+           if (!wordlist.empty()) {
             alphabetical_password_guesser(wordlist);
-            break;
+           } else {
+                error_msg("No words provided for dictionary attack.");
+           }
+           break;
         }
         
         case 5:
-            status_msg("Exiting PassCrack");
+            status_msg("Personalized password generation selected.");
+            print_separator();
+            break;
+        case 6:
+            status_msg("Exiting PassCrack. Goodbye!");
             print_separator();
             break;
         default:

@@ -12,3 +12,6 @@ Coming features:
 HOW TO USE:
 lowkey pretty straightforward. I'm including the compiled binary, but you can also use g++ to directly compile the source code yourself. I'll keep providing updates and eventually make this a much better and functioning app, but for now I just want to put this out there.
 but if you wanna compile it you'd do something like g++ passcrack.cpp -o passcrack.exe and there you have it. 
+
+VERSION 1.0.1 (Feb 16 2026)
+-added feature to read from custom wordlists such as SecLists. 
