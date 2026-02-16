@@ -160,12 +160,20 @@ vector<string> generate_possible_passwords(string word) {
     string leet = lower;
     //leetspeak substitutions
     for (char& c : leet) {
-        if (c == 'a') c = '4';
-        else if (c == 'e') c = '3';
-        else if (c == 'i') c = '1';
-        else if (c == 'o') c = '0';
-        else if (c == 's') c = '5';
-        else if (c == 't') c = '7';
+        switch (c) {
+            case 'a': c = '4'; 
+                break;
+            case 'e' : c = '3';
+                break;
+            case 'i' : c = '1';
+                break;
+            case 'o' : c = '0';
+                break;
+            case 's' : c = '5';
+                break;
+            case 't' : c = '7';
+                break;
+        }
     }
     passwords.push_back(leet);
 
