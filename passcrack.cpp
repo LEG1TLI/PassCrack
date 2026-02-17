@@ -138,7 +138,7 @@ int eight_digit_password() {
     return 0;
 }
 
-vector<string> generate_possible_passwords(string word) {
+vector<string> generate_possible_passwords(const string& word) {
     vector <string> passwords;
 
     passwords.push_back(word);
@@ -158,7 +158,7 @@ vector<string> generate_possible_passwords(string word) {
     passwords.push_back(capitalized);
 
     string leet = lower;
-    //leetspeak substitutions
+    //checks for common letters and replaces them with leetspeak equivalents
     for (char& c : leet) {
         switch (c) {
             case 'a': c = '4'; 
@@ -196,27 +196,34 @@ bool alphabetical_password_guesser(vector <string>& wordlist) {
     auto start_time = steady_clock::now();
 
     for(const string& word : wordlist) {
-        attempts++;
-        cout << " [" << attempts << "] Trying: " << word << endl;
+        vector<string> variations = generate_possible_passwords(word);
+        for (const string& variation : variations) {
+            attempts++;
+            cout << "[" << attempts << "] Trying: " << variation << endl;
 
-        if (word == target_password) {
-            auto end_time = steady_clock::now();
-            auto duration = duration_cast<seconds>(end_time - start_time).count();
-            success_msg("Password found!: " + word);
+            if (variation == target_password) {
+                auto end_time = steady_clock::now();
+                auto duration = duration_cast<seconds>(end_time - start_time).count();
+                success_msg("Password found: " + variation);
 
-            print_separator();
-            success_msg("PASSWORD CRACKED!");
-            success_msg("Password: " + word);
-            success_msg("Attempts: " + to_string(attempts));
-            success_msg("Time: " + to_string(duration) + " seconds");
-            print_separator();
-            return true;
+                print_separator();
+                success_msg("Total attempts: " + to_string(attempts));
+                success_msg("Time taken: " + to_string(duration) + " seconds");
+                success_msg("Base word: " + word);
+                success_msg("Attempts: " + to_string(attempts));
+                print_separator();
+                return true;
+            }
         }
+        
     }
-
     error_msg("Password not found in wordlist.");
     return false;
+
 }
+
+    
+
 
 void wordlist_frm_file(vector<string>& wordlist) {
     string filepath;
