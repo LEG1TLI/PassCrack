@@ -1,7 +1,10 @@
+#ifdef __linux__
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
-#include <conio.h>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -20,6 +23,43 @@ void clear_screen()
     system("cls");
 }
 
+int _getch()
+{
+    struct termios oldt, newt;
+    int ch;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+}
+
+int _kbhit()
+{
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+    if (ch != EOF)
+    {
+        ungetc(ch, stdin);
+        return 1;
+    }
+    return 0;
+
+}
+#endif
+
 void print_banner()
 {
     cout << "\n";
@@ -33,7 +73,7 @@ void print_banner()
     cout << "  ║  ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝\n";
     cout << "  ║                                                                           ║\n";
     cout << "  ║                    Advanced Password Cracking Utility                     ║\n";
-    cout << "  ║                         Version 1.0.1 | 2026 Edition                      ║\n";
+    cout << "  ║                         Version 1.1.3 | 2026 Edition                      ║\n";
     cout << "  ║                        [ For Educational Use Only ]                       ║\n";
     cout << "  ║                                                                           ║\n";
     cout << "  ╚═══════════════════════════════════════════════════════════════════════════╝\n";
@@ -231,18 +271,15 @@ vector<string> generate_possible_passwords(const string &word)
     add(lower + "!");
     if (!lower.empty())
         add(string(1, static_cast<char>(toupper(static_cast<unsigned char>(lower[0])))) + lower.substr(1) + "123");
-    
+
     vector<string> out;
     out.reserve(seen.size());
-    for (auto& s : seen) out.push_back(s);
+    for (auto &s : seen)
+        out.push_back(s);
     return out;
 }
 
-
-
-
-
-bool alphabetical_password_guesser(vector<string>& wordlist)
+bool alphabetical_password_guesser(vector<string> &wordlist)
 {
     string target_password;
     cout << "Enter target password: " << endl;
@@ -250,35 +287,36 @@ bool alphabetical_password_guesser(vector<string>& wordlist)
     print_separator();
     cout << "Starting dictionary attack..." << endl;
 
-    //input sanitization
+    // input sanitization
     vector<string> clean;
     clean.reserve(wordlist.size());
-    for (auto& w : wordlist) 
+    for (auto &w : wordlist)
     {
         string t = w;
         auto l = t.find_first_not_of(" \t\r\n");
-        if (l == string::npos) continue;
+        if (l == string::npos)
+            continue;
         auto r = t.find_last_not_of(" \t\r\n");
         clean.push_back(t.substr(1, r - l + 1));
     }
 
     int attempts = 0;
     auto start_time = steady_clock::now();
-    //reduce console clutter
+    // reduce console clutter
     const int print_every = 1000;
 
-    for(const string& word : clean) 
+    for (const string &word : clean)
     {
         auto variations = generate_possible_passwords(word);
-        for (const string& variation : variations) 
+        for (const string &variation : variations)
         {
             ++attempts;
-            if((attempts % print_every) == 0)
+            if ((attempts % print_every) == 0)
             {
                 cout << "[" << attempts << "] Trying: " << variation << endl;
             }
 
-            if(variation == target_password) 
+            if (variation == target_password)
             {
                 auto end_time = steady_clock::now();
                 double secs = duration_cast<duration<double>>(end_time - start_time).count();
@@ -295,7 +333,6 @@ bool alphabetical_password_guesser(vector<string>& wordlist)
 
     error_msg("Password not found in wordlist");
     return false;
-
 }
 
 void wordlist_frm_file(vector<string> &wordlist)
@@ -332,8 +369,134 @@ void wordlist_frm_file(vector<string> &wordlist)
 
 void generate_personal_pwd()
 {
-    cout << "Personalized password generation coming soon!" << endl;
-    cout << "this feature is meant for generating a password, either for your own pentesting purposes or just to use on a day to day basis!" << endl;
+    cout << "Generate a personlized passsword based on your input. " << endl;
+    cout << "Enter a name/noun, a date, and/or a memorable word (comma separated): " << endl;
+    string input;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    getline(cin, input);
+
+    auto trimmed = [](string &s)
+    {
+        const char *ws = " \t\r\n";
+        auto l = s.find_first_not_of(ws);
+        if (l == string::npos)
+        {
+            s.clear();
+            return;
+        }
+        auto r = s.find_last_not_of(ws);
+        s = s.substr(l, r - l + 1);
+    };
+
+    vector<string> parts;
+    {
+        size_t pos = 0;
+        while (pos < input.size())
+        {
+            auto comma = input.find(',', pos);
+            string token = input.substr(pos, comma - pos);
+            trimmed(token);
+            if (!token.empty())
+                parts.push_back(token);
+            if (comma == string::npos)
+                break;
+            pos = comma + 1;
+        }
+    }
+
+    if (parts.empty())
+    {
+        error_msg("No valid token provided");
+        return;
+    }
+
+    unordered_set<string> results;
+    const vector<string> common_suffixes =
+        {
+            "123", "!", "@", "2024", "2025", "2026"};
+    const vector<string> separators =
+        {
+            "", "_", "-", "."};
+
+    for (const auto &p : parts)
+    {
+        auto variations = generate_possible_passwords(p);
+        for (auto &v : variations)
+            results.insert(v);
+    }
+
+    for (size_t i = 0; i < parts.size(); ++i)
+    {
+        for (size_t j = 0; j < parts.size(); ++j)
+        {
+            if (i == j)
+                continue;
+            string a = to_lwr_cpy(parts[i]);
+            string b = to_lwr_cpy(parts[j]);
+            for (const auto &sep : separators)
+            {
+                string comb = a + sep + b;
+                auto variations = generate_possible_passwords(comb);
+                for (auto &v : variations)
+                    results.insert(v);
+                for (const auto &suf : common_suffixes)
+                {
+                    results.insert(comb + suf);
+                    results.insert(suf + comb);
+                }
+            }
+        }
+    }
+
+    if (parts.size() >= 3)
+    {
+        for (size_t i = 0; i + 2 < parts.size(); ++i)
+        {
+            string t = to_lwr_cpy(parts[i]) + to_lwr_cpy(parts[i + 1]) + to_lwr_cpy(parts[1 + 2]);
+            auto variations = generate_possible_passwords(t);
+            for (auto &v : variations)
+                results.insert(v);
+        }
+    }
+
+    const size_t max_results = 5000;
+    vector<string> out;
+    out.reserve(min(results.size(), max_results));
+    for (const auto &s : results)
+    {
+        out.push_back(s);
+        if (out.size() >= max_results)
+            break;
+    }
+
+    print_separator();
+    success_msg("Generated " + to_string(results.size()) + " candidate passwords (showing up to " + to_string(out.size()) + "):");
+    for (size_t i = 0; i < out.size() && i < 50; ++i)
+    {
+        cout << " [" << (i+1) << "] " << out[1] << '\n';
+    }
+    print_separator();
+
+    //save to file
+    cout << "Save full list to file? (y/n): ";
+    char response = 'n';
+    cin >> response;
+    if (response == 'y' || response == 'Y')
+    {
+        cout << "Enter filename to save to: ";
+        string filename;
+        cin >> filename;
+        ofstream ofs(filename);
+        if (!ofs)
+        {
+            error_msg("Failed to open file for writing: " + filename);
+            return;
+        }
+        for (const auto &s : out) ofs << s << '\n';
+        ofs.close();
+        success_msg("Saved " + to_string(out.size()) + " passwords to " + filename);
+    }
+
 }
 
 int main()
