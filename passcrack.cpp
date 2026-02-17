@@ -231,18 +231,15 @@ vector<string> generate_possible_passwords(const string &word)
     add(lower + "!");
     if (!lower.empty())
         add(string(1, static_cast<char>(toupper(static_cast<unsigned char>(lower[0])))) + lower.substr(1) + "123");
-    
+
     vector<string> out;
     out.reserve(seen.size());
-    for (auto& s : seen) out.push_back(s);
+    for (auto &s : seen)
+        out.push_back(s);
     return out;
 }
 
-
-
-
-
-bool alphabetical_password_guesser(vector<string>& wordlist)
+bool alphabetical_password_guesser(vector<string> &wordlist)
 {
     string target_password;
     cout << "Enter target password: " << endl;
@@ -250,35 +247,36 @@ bool alphabetical_password_guesser(vector<string>& wordlist)
     print_separator();
     cout << "Starting dictionary attack..." << endl;
 
-    //input sanitization
+    // input sanitization
     vector<string> clean;
     clean.reserve(wordlist.size());
-    for (auto& w : wordlist) 
+    for (auto &w : wordlist)
     {
         string t = w;
         auto l = t.find_first_not_of(" \t\r\n");
-        if (l == string::npos) continue;
+        if (l == string::npos)
+            continue;
         auto r = t.find_last_not_of(" \t\r\n");
         clean.push_back(t.substr(1, r - l + 1));
     }
 
     int attempts = 0;
     auto start_time = steady_clock::now();
-    //reduce console clutter
+    // reduce console clutter
     const int print_every = 1000;
 
-    for(const string& word : clean) 
+    for (const string &word : clean)
     {
         auto variations = generate_possible_passwords(word);
-        for (const string& variation : variations) 
+        for (const string &variation : variations)
         {
             ++attempts;
-            if((attempts % print_every) == 0)
+            if ((attempts % print_every) == 0)
             {
                 cout << "[" << attempts << "] Trying: " << variation << endl;
             }
 
-            if(variation == target_password) 
+            if (variation == target_password)
             {
                 auto end_time = steady_clock::now();
                 double secs = duration_cast<duration<double>>(end_time - start_time).count();
@@ -295,7 +293,6 @@ bool alphabetical_password_guesser(vector<string>& wordlist)
 
     error_msg("Password not found in wordlist");
     return false;
-
 }
 
 void wordlist_frm_file(vector<string> &wordlist)
