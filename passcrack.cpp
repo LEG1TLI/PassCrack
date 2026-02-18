@@ -329,8 +329,134 @@ void wordlist_frm_file(vector<string> &wordlist)
 
 void generate_personal_pwd()
 {
-    cout << "Personalized password generation coming soon!" << endl;
-    cout << "this feature is meant for generating a password, either for your own pentesting purposes or just to use on a day to day basis!" << endl;
+    cout << "Generate a personlized passsword based on your input. " << endl;
+    cout << "Enter a name/noun, a date, and/or a memorable word (comma separated): " << endl;
+    string input;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    getline(cin, input);
+
+    auto trimmed = [](string &s)
+    {
+        const char *ws = " \t\r\n";
+        auto l = s.find_first_not_of(ws);
+        if (l == string::npos)
+        {
+            s.clear();
+            return;
+        }
+        auto r = s.find_last_not_of(ws);
+        s = s.substr(l, r - l + 1);
+    };
+
+    vector<string> parts;
+    {
+        size_t pos = 0;
+        while (pos < input.size())
+        {
+            auto comma = input.find(',', pos);
+            string token = input.substr(pos, comma - pos);
+            trimmed(token);
+            if (!token.empty())
+                parts.push_back(token);
+            if (comma == string::npos)
+                break;
+            pos = comma + 1;
+        }
+    }
+
+    if (parts.empty())
+    {
+        error_msg("No valid token provided");
+        return;
+    }
+
+    unordered_set<string> results;
+    const vector<string> common_suffixes =
+        {
+            "123", "!", "@", "2024", "2025", "2026"};
+    const vector<string> separators =
+        {
+            "", "_", "-", "."};
+
+    for (const auto &p : parts)
+    {
+        auto variations = generate_possible_passwords(p);
+        for (auto &v : variations)
+            results.insert(v);
+    }
+
+    for (size_t i = 0; i < parts.size(); ++i)
+    {
+        for (size_t j = 0; j < parts.size(); ++j)
+        {
+            if (i == j)
+                continue;
+            string a = to_lwr_cpy(parts[i]);
+            string b = to_lwr_cpy(parts[j]);
+            for (const auto &sep : separators)
+            {
+                string comb = a + sep + b;
+                auto variations = generate_possible_passwords(comb);
+                for (auto &v : variations)
+                    results.insert(v);
+                for (const auto &suf : common_suffixes)
+                {
+                    results.insert(comb + suf);
+                    results.insert(suf + comb);
+                }
+            }
+        }
+    }
+
+    if (parts.size() >= 3)
+    {
+        for (size_t i = 0; i + 2 < parts.size(); ++i)
+        {
+            string t = to_lwr_cpy(parts[i]) + to_lwr_cpy(parts[i + 1]) + to_lwr_cpy(parts[1 + 2]);
+            auto variations = generate_possible_passwords(t);
+            for (auto &v : variations)
+                results.insert(v);
+        }
+    }
+
+    const size_t max_results = 5000;
+    vector<string> out;
+    out.reserve(min(results.size(), max_results));
+    for (const auto &s : results)
+    {
+        out.push_back(s);
+        if (out.size() >= max_results)
+            break;
+    }
+
+    print_separator();
+    success_msg("Generated " + to_string(results.size()) + " candidate passwords (showing up to " + to_string(out.size()) + "):");
+    for (size_t i = 0; i < out.size() && i < 50; ++i)
+    {
+        cout << " [" << (i+1) << "] " << out[1] << '\n';
+    }
+    print_separator();
+
+    //save to file
+    cout << "Save full list to file? (y/n): ";
+    char response = 'n';
+    cin >> response;
+    if (response == 'y' || response == 'Y')
+    {
+        cout << "Enter filename to save to: ";
+        string filename;
+        cin >> filename;
+        ofstream ofs(filename);
+        if (!ofs)
+        {
+            error_msg("Failed to open file for writing: " + filename);
+            return;
+        }
+        for (const auto &s : out) ofs << s << '\n';
+        ofs.close();
+        success_msg("Saved " + to_string(out.size()) + " passwords to " + filename);
+    }
+
 }
 
 int main()
