@@ -13,6 +13,7 @@
 #include <fstream>
 #include <unordered_set>
 #include <cctype>
+#include "httplib.h"
 using namespace std;
 using namespace chrono;
 // this generates random seed based on current time at moment of execution
@@ -92,7 +93,8 @@ void print_menu()
     cout << "  │    [3] → Bruteforce 8-Digit Numeric Password                              │\n";
     cout << "  │    [4] → Dictionary Attack with Custom Wordlist                           │\n";
     cout << "  │    [5] → Generate personalized password                                   │\n";
-    cout << "  │    [6] → Exit PassCrack                                                   │\n";
+    cout << "  │    [6] → Web Application Bruteforce (HTTP POST to /login endpoint)        │\n";
+    cout << "  │    [7] → Exit PassCrack                                                   │\n";
     cout << "  └───────────────────────────────────────────────────────────────────────────┘\n";
     cout << "\n  >> Enter your choice: ";
 }
@@ -141,6 +143,29 @@ void error_msg(const string &msg)
 
 // todo: add function for just normal password generation. allow input
 // like name, dob, and petnames to generate personalized passwords.
+
+//function for sending generated passwords over HTTP to a specific endpoint 
+bool web_login(const string& url, const string& username, 
+               const string& password, const string& form_field_user,
+               const string& form_field_pass)
+{
+    httplib::Client cli(url);
+    httplib::Params params;
+    params.emplace(form_field_user, username);
+    params.emplace(form_field_pass, password);
+
+    auto res = cli.Post("/login", params);
+    if (res && res->status == 200)
+    {
+        if (res->body.find("Welcome") != string::npos ||
+        res->body.find("Dashboard") != string::npos)
+        {
+            return true;
+        }
+    }
+    return false;
+
+}
 
 // function for generating four digit passwords
 int four_digit_password()
@@ -284,6 +309,7 @@ bool alphabetical_password_guesser(vector<string> &wordlist)
     string target_password;
     cout << "Enter target password: " << endl;
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    getline(cin, target_password);
     print_separator();
     cout << "Starting dictionary attack..." << endl;
 
@@ -297,7 +323,7 @@ bool alphabetical_password_guesser(vector<string> &wordlist)
         if (l == string::npos)
             continue;
         auto r = t.find_last_not_of(" \t\r\n");
-        clean.push_back(t.substr(1, r - l + 1));
+        clean.push_back(t.substr(l, r - l + 1));
     }
 
     int attempts = 0;
@@ -452,7 +478,7 @@ void generate_personal_pwd()
     {
         for (size_t i = 0; i + 2 < parts.size(); ++i)
         {
-            string t = to_lwr_cpy(parts[i]) + to_lwr_cpy(parts[i + 1]) + to_lwr_cpy(parts[1 + 2]);
+            string t = to_lwr_cpy(parts[i]) + to_lwr_cpy(parts[i + 1]) + to_lwr_cpy(parts[i + 2]);
             auto variations = generate_possible_passwords(t);
             for (auto &v : variations)
                 results.insert(v);
@@ -473,7 +499,7 @@ void generate_personal_pwd()
     success_msg("Generated " + to_string(results.size()) + " candidate passwords (showing up to " + to_string(out.size()) + "):");
     for (size_t i = 0; i < out.size() && i < 50; ++i)
     {
-        cout << " [" << (i+1) << "] " << out[1] << '\n';
+        cout << " [" << (i+1) << "] " << out[i] << '\n';
     }
     print_separator();
 
@@ -580,6 +606,7 @@ int main()
     case 5:
         status_msg("Personalized password generation selected.");
         print_separator();
+        generate_personal_pwd();
         break;
     case 6:
         status_msg("Exiting PassCrack. Goodbye!");
