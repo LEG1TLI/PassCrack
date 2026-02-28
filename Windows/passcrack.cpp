@@ -13,8 +13,6 @@
 #include "httplib.h"
 using namespace std;
 using namespace chrono;
-// this generates random seed based on current time at moment of execution
-mt19937 generator(system_clock::now().time_since_epoch().count());
 
 void clear_screen()
 {
@@ -134,14 +132,11 @@ int four_digit_password()
     cout << "Iterating thorugh possible four digit passwords..." << endl;
     cout << "--------------------------------------------------------------" << endl;
 
-    uniform_int_distribution<int> distribution(1000, 9999);
 
-    while (true)
+    for(int password = 0; password <= 9999; ++password)
     {
-        int password = distribution(generator);
-        cout << password << endl;
-
-        if (_kbhit())
+        cout << setfill('0') << setw(4) << password << endl;
+        if(_kbhit())
         {
             _getch();
             break;
@@ -156,17 +151,14 @@ int four_digit_password()
 // function for generating six digit passwords
 int six_digit_password()
 {
-    uniform_int_distribution<int> distribution(100000, 999999);
 
     cout << "Iterating through possible six digit password..." << endl;
     cout << "--------------------------------------------------------------" << endl;
 
-    while (true)
+    for(int password = 0; password <= 999999; ++password)
     {
-        int password = distribution(generator);
-        cout << password << endl;
-
-        if (_kbhit())
+        cout << setfill('0') << setw(6) << password << endl;
+        if(_kbhit())
         {
             _getch();
             break;
@@ -181,17 +173,14 @@ int six_digit_password()
 // function for generating eight digit passwords
 int eight_digit_password()
 {
-    uniform_int_distribution<int> distribution(10000000, 99999999);
 
     cout << "Iterating through possible eight digit password..." << endl;
     cout << "--------------------------------------------------------------" << endl;
 
-    while (true)
+    for (int password = 0; password <= 99999999; ++password)
     {
-        int password = distribution(generator);
-        cout << password << endl;
-
-        if (_kbhit())
+        cout << setfill('0') << setw(8) << password << endl;
+        if(_kbhit())
         {
             _getch();
             break;
